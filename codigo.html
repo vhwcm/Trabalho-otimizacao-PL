@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Guia LP (lp_solve) + Simulador de Viabilidade</title>
+      <style>
+            :root {
+                  --bg: #0b1020;
+                  --panel: #121933;
+                  --panel-soft: #1a2346;
+                  --text: #e8ecff;
+                  --muted: #afbadb;
+                  --ok: #24c788;
+                  --warn: #ffbf47;
+                  --bad: #ff5d7a;
+                  --accent: #67a7ff;
+                  --border: #2d3b6e;
+            }
+
+            * { box-sizing: border-box; }
+
+            body {
+                  margin: 0;
+                  font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+                  color: var(--text);
+                  background:
+                        radial-gradient(circle at 10% 10%, #1e2a57 0%, transparent 40%),
+                        radial-gradient(circle at 90% 20%, #1b5ba8 0%, transparent 35%),
+                        var(--bg);
+                  line-height: 1.5;
+            }
+
+            .wrap {
+                  width: min(1100px, 92vw);
+                  margin: 30px auto 50px;
+                  display: grid;
+                  gap: 18px;
+            }
+
+            .card {
+                  background: linear-gradient(180deg, var(--panel) 0%, #101730 100%);
+                  border: 1px solid var(--border);
+                  border-radius: 14px;
+                  padding: 18px;
+                  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+            }
+
+            h1, h2, h3 { margin: 0 0 12px; }
+            h1 { font-size: clamp(1.35rem, 2vw, 2rem); }
+            h2 { font-size: 1.2rem; color: #cfe0ff; }
+            h3 { font-size: 1rem; color: #d9e4ff; }
+
+            p, li { color: var(--muted); }
+            strong { color: var(--text); }
+
+            .grid {
+                  display: grid;
+                  grid-template-columns: repeat(12, 1fr);
+                  gap: 12px;
+            }
+
+            .col-6 { grid-column: span 6; }
+            .col-12 { grid-column: span 12; }
+
+            @media (max-width: 900px) {
+                  .col-6 { grid-column: span 12; }
+            }
+
+            .badge {
+                  display: inline-block;
+                  background: #1b2f63;
+                  border: 1px solid #35539a;
+                  color: #dbe8ff;
+                  border-radius: 999px;
+                  padding: 4px 10px;
+                  font-size: 0.8rem;
+                  margin: 0 6px 6px 0;
+            }
+
+            pre {
+                  margin: 0;
+                  overflow: auto;
+                  background: #0a0f20;
+                  border: 1px solid #253564;
+                  border-radius: 10px;
+                  color: #d8e5ff;
+                  padding: 12px;
+                  font-size: 0.92rem;
+            }
+
+            textarea {
+                  width: 100%;
+                  min-height: 230px;
+                  resize: vertical;
+                  background: #0a0f20;
+                  color: #eff4ff;
+                  border: 1px solid #324a87;
+                  border-radius: 10px;
+                  padding: 12px;
+                  font: 500 0.92rem/1.4 Consolas, Monaco, monospace;
+            }
+
+            .btns {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 8px;
+                  margin: 12px 0;
+            }
+
+            button {
+                  border: 1px solid #3c5da9;
+                  background: #1a2b59;
+                  color: #ecf3ff;
+                  padding: 9px 12px;
+                  border-radius: 10px;
+                  font-weight: 600;
+                  cursor: pointer;
+            }
+
+            button:hover { filter: brightness(1.12); }
+
+            .result {
+                  border-radius: 10px;
+                  border: 1px solid var(--border);
+                  padding: 12px;
+                  margin-top: 10px;
+                  background: var(--panel-soft);
+                  white-space: pre-wrap;
+                  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                  font-size: 0.9rem;
+            }
+
+            .ok { border-color: #227f60; color: #c8ffe9; }
+            .bad { border-color: #8e3350; color: #ffdbe3; }
+            .warn { border-color: #8a6b2d; color: #fff2cf; }
+
+            .tip {
+                  border-left: 4px solid var(--accent);
+                  padding-left: 10px;
+                  margin: 8px 0;
+                  color: #cbd8ff;
+            }
+
+            .tabs {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 8px;
+            }
+
+            .tab-btn {
+                  border: 1px solid #3c5da9;
+                  background: #142550;
+                  color: #dce8ff;
+                  padding: 10px 14px;
+                  border-radius: 10px;
+                  font-weight: 700;
+            }
+
+            .tab-btn.active {
+                  background: linear-gradient(180deg, #2a4b94 0%, #1d3570 100%);
+                  border-color: #6ea1ff;
+                  color: #ffffff;
+                  box-shadow: 0 0 0 1px rgba(110, 161, 255, 0.28) inset;
+            }
+
+            .tab-panel {
+                  animation: fadeIn 0.2s ease;
+            }
+
+            @keyframes fadeIn {
+                  from { opacity: 0; transform: translateY(4px); }
+                  to { opacity: 1; transform: translateY(0); }
+            }
+
+            details {
+                  border: 1px solid #2a3a70;
+                  border-radius: 10px;
+                  background: #0d142a;
+                  overflow: hidden;
+            }
+
+            summary {
+                  cursor: pointer;
+                  padding: 10px 12px;
+                  font-weight: 700;
+                  color: #d9e6ff;
+                  background: #152149;
+                  border-bottom: 1px solid #2a3a70;
+            }
+
+            #fullSpec {
+                  max-height: 520px;
+                  margin: 0;
+                  border: 0;
+                  border-radius: 0;
+            }
+      </style>
+</head>
+<body>
+      <main class="wrap">
+            <section class="card">
+                  <h1>LP format (lp_solve) — guia visual completo</h1>
+                  <span class="badge">Objetivo → Restrições → Declarações</span>
+                  <span class="badge">Cada sentença termina com ;</span>
+                  <span class="badge">Use espaço: 2 x1 (evite 2e1)</span>
+            </section>
+
+            <section class="card">
+                  <div class="tabs" role="tablist" aria-label="Navegação da documentação">
+                        <button class="tab-btn active" data-tab="tab-overview" role="tab" aria-selected="true">Visão Geral</button>
+                        <button class="tab-btn" data-tab="tab-spec" role="tab" aria-selected="false">Especificação Completa</button>
+                        <button class="tab-btn" data-tab="tab-examples" role="tab" aria-selected="false">Exemplos</button>
+                        <button class="tab-btn" data-tab="tab-simulator" role="tab" aria-selected="false">Simulador</button>
+                  </div>
+            </section>
+
+            <section id="tab-overview" class="card tab-panel active" role="tabpanel">
+                  <h2>Resumo da sintaxe</h2>
+                  <div class="grid">
+                        <div class="col-6">
+                              <h3>Ordem do arquivo LP</h3>
+                              <pre>&lt;objective function&gt;
+&lt;constraint&gt;*
+&lt;declaration&gt;*</pre>
+                              <p class="tip">Maximização é padrão. Para minimizar, use <strong>min:</strong>.</p>
+                        </div>
+                        <div class="col-6">
+                              <h3>Operadores aceitos</h3>
+                              <ul>
+                                    <li><strong>&lt;</strong>, <strong>&lt;=</strong>, <strong>=</strong>, <strong>&gt;</strong>, <strong>&gt;=</strong></li>
+                                    <li>No lp_solve, <strong>&lt;</strong> e <strong>&lt;=</strong> têm o mesmo efeito.</li>
+                                    <li>Da mesma forma, <strong>&gt;</strong> e <strong>&gt;=</strong>.</li>
+                              </ul>
+                        </div>
+                        <div class="col-6">
+                              <h3>Declarações de variáveis</h3>
+                              <pre>int x1, x2;
+bin x3, x4;
+sec x5;
+free x6;</pre>
+                        </div>
+                        <div class="col-6">
+                              <h3>Boas práticas</h3>
+                              <ul>
+                                    <li>Para bound simples, prefira sem rótulo: <strong>x1 &gt;= 1;</strong></li>
+                                    <li>Evite coeficientes zero no arquivo.</li>
+                                    <li>Não use parênteses no formato LP.</li>
+                                    <li>Separe número e variável com espaço (ex.: <strong>2 e1</strong>).</li>
+                              </ul>
+                        </div>
+                  </div>
+            </section>
+
+            <section id="tab-spec" class="card tab-panel" role="tabpanel" hidden>
+                  <h2>Especificação completa (formatada)</h2>
+
+                  <h3>LP file format</h3>
+                  <p>
+                        The lp-format is lpsolves native format to read and write lp models.
+                        Note that this format is not the same as the CPLEX LP format (see CPLEX lp files)
+                        or the Xpress LP format (see Xpress lp files).
+                  </p>
+                  <p>
+                        The lp-format input syntax is a set of algebraic expressions and <strong>free</strong>,
+                        <strong>int</strong>, <strong>bin</strong>, <strong>sec</strong>, <strong>sos</strong> declarations in the following order:
+                  </p>
+                  <pre>&lt;objective function&gt;
+&lt;constraint&gt;*
+&lt;declaration&gt;*</pre>
+
+                  <h3>Where</h3>
+                  <ul>
+                        <li>
+                              <strong>&lt;objective function&gt;</strong> is a linear combination of optional variables and constants,
+                              ending with a semicolon, optionally preceded by "max:" or "min:".
+                              Maximization is the default. Alternatives are minimise, minimize, maximise, Maximize.
+                              The objective function is required, but can be empty.
+                        </li>
+                        <li>
+                              <strong>&lt;constraint&gt;</strong> is an optional constraint name followed by a colon plus a linear combination,
+                              then a relational operator and another linear combination, ending with semicolon.
+                              Operators: "&lt;" "&lt;=" "=" "&gt;" "&gt;=".
+                        </li>
+                        <li>
+                              <strong>&lt;declaration&gt;</strong> can be:
+                              <pre>int var [,] var ... ;
+bin|binary var [,] var ... ;
+sec var [,] var ... ;
+free var [,] var ... ;</pre>
+                        </li>
+                        <li>
+                              <strong>SOS</strong> declarations:
+                              <pre>sos
+[sosdescr:] [,] var[:weight] [,] var[:weight] ... &lt;[=] sostype[:sosorder] ; ...
+
+or
+
+sosx
+[sosdescr:] var[:weight] [,] var[:weight] ... ; ...</pre>
+                        </li>
+                        <li>
+                              A var must start with a letter and may contain additional letters, numerals,
+                              or characters from this list: <strong>_[]{}/.&#38;#$%~'@^</strong>
+                        </li>
+                        <li>
+                              Comments with <strong>/* */</strong> and <strong>//</strong> are allowed.
+                        </li>
+                        <li>
+                              Empty lines are allowed.
+                        </li>
+                  </ul>
+
+                  <h3>Bounds and ranges notes</h3>
+                  <p>
+                        For bounds on a single variable, do not put labels before them for better performance.
+                  </p>
+                  <pre>x1 &gt;= 1;      /* better */
+r_x1: x1 &gt;= 1; /* creates extra row */</pre>
+                  <p>
+                        Range constraints can be represented in one row:
+                  </p>
+                  <pre>myrow: x1 + x2 &gt;= 2;
+myrow: &lt;= 6;
+
+or
+
+2 &lt;= x1 + x2 &lt;= 6;</pre>
+
+                  <h3>Peculiarities (integral)</h3>
+                  <p><strong>Exponents:</strong> writing <strong>2e1</strong> may be interpreted as scientific notation (20), not <strong>2 * e1</strong>.</p>
+                  <pre>Correct:
+3 d1 - 2 e1 &lt;= 16;
+
+Risky:
+3d1 - 2e1 &lt;= 16;</pre>
+                  <p><strong>Operators:</strong> adjacent signs are accepted; parentheses are not allowed in LP format.</p>
+                  <pre>+3 x - 2 y &lt;= 16;
++3 x + -2 y &lt;= 16;
++3 x +- 2 y &lt;= 16;
+
+Not allowed:
++3 x - (-2) y &lt;= 16;</pre>
+            </section>
+
+            <section id="tab-examples" class="card tab-panel" role="tabpanel" hidden>
+                  <h2>Exemplos (todos os blocos principais)</h2>
+                  <div class="grid">
+                        <div class="col-6">
+                              <h3>Simple problem</h3>
+                              <pre>-x1 -x2;
+/* or min: x1 + x2; */
+x1 &gt;= 1;
+x2 &gt;= 1;
+x1 + x2 &gt;= 2;
+int x1;</pre>
+                        </div>
+                        <div class="col-6">
+                              <h3>Named row</h3>
+                              <pre>min: x1 + x2;
+x1 &gt;= 1;
+x2 &gt;= 1;
+myrow: x1 + x2 &gt;= 2;
+int x1;</pre>
+                        </div>
+
+                        <div class="col-6">
+                              <h3>Empty objective</h3>
+                              <pre>min: ;
+x1 &gt;= 1;
+x2 &gt;= 1;
+myrow: x1 + x2 &gt;= 2;
+int x1;</pre>
+                        </div>
+                        <div class="col-6">
+                              <h3>Objective with constants</h3>
+                              <pre>min: 2 + x1 + 3 + x2 + 4;
+x1 &gt;= 1;
+x2 &gt;= 1;
+myrow: x1 + x2 &gt;= 2;
+int x1;</pre>
+                        </div>
+
+                        <div class="col-6">
+                              <h3>Integer variables</h3>
+                              <pre>min: -x1 -2 x2 +0.1 x3 +3 x4;
+r_1: +x1 +x2 &lt;= 5;
+r_2: +2 x1 -x2 &gt;= 0;
+r_3: -x1 +3 x2 &gt;= 0;
+r_4: +x3 +x4 &gt;= 0.5;
+x3 &gt;= 1.1;
+
+int x3, x4;</pre>
+                        </div>
+                        <div class="col-6">
+                              <h3>Binary variables</h3>
+                              <pre>min: -x1 -2 x2 +0.1 x3 +3 x4;
+r_1: +x1 +x2 &lt;= 5;
+r_2: +2 x1 -x2 &gt;= 0;
+r_3: -x1 +3 x2 &gt;= 0;
+r_4: +x3 +x4 &gt;= 0.5;
+
+bin x3, x4;</pre>
+                        </div>
+
+                        <div class="col-6">
+                              <h3>Semi-continuous variables</h3>
+                              <pre>max: x1 + 2x2 - 4x3 -3x4;
+x1 + x2 &lt;= 5;
+2x1 - x2 &gt;= 0;
+-x1 + 3x2 &gt;= 0;
+x3 + x4 &gt;= .5;
+x3 &gt;= 1.1;
+x3 &lt;= 10;
+
+sec x3, x4;</pre>
+                        </div>
+                        <div class="col-6">
+                              <h3>Free variables</h3>
+                              <pre>max: x1 + 2x2 - 4x3 -3x4;
+x1 + x2 &lt;= 5;
+2x1 - x2 &gt;= 0;
+-x1 + 3x2 &gt;= 0;
+x3 + x4 &gt;= .5;
+x3 &gt;= 1.1;
+x3 &lt;= 10;
+
+free x2, x4;</pre>
+                        </div>
+
+                        <div class="col-12">
+                              <h3>Special Ordered Sets (SOS)</h3>
+                              <pre>min: -x1 -x2 -3 x3 -2 x4 -2 x5;
+c1: -x1 -x2 +x3 +x4 &lt;= 30;
+c2: +x1 +x3 -3 x4 &lt;= 30;
+x1 &lt;= 40;
+x2 &lt;= 1;
+x5 &lt;= 1;
+
+sos
+SOS1: x1, x2, x3, x4 &lt;= 2;
+SOS2: x2, x3, x4, x5 &lt;= 3;
+
+Alternative:
+
+sos2
+SOS1: x1, x2, x3, x4;
+SOS2: x2, x3, x4, x5;
+
+With weights:
+
+sos
+SOS1: x1:5, x2:9, x3:12, x4:17 &lt;= 2:3;
+SOS2: x2:9, x3:12, x4:17, x5:21 &lt;= 2:3;</pre>
+                        </div>
+                  </div>
+            </section>
+
+            <section id="tab-simulator" class="card tab-panel" role="tabpanel" hidden>
+                  <h2>Simulador de viabilidade (didático)</h2>
+                  <p>
+                        Cole seu modelo LP e clique em verificar. O algoritmo faz busca discreta
+                        em domínio pequeno para indicar viável/inviável.
+                  </p>
+                  <p class="tip">
+                        Ferramenta educacional: para validação oficial, rode no solver real.
+                  </p>
+
+                  <div class="btns">
+                        <button id="btnExViavel" type="button">Carregar exemplo viável</button>
+                        <button id="btnExInviavel" type="button">Carregar exemplo inviável</button>
+                        <button id="btnLimpar" type="button">Limpar</button>
+                  </div>
+
+                  <textarea id="lpInput" spellcheck="false">min: x1 + x2;
+x1 &gt;= 1;
+x2 &gt;= 1;
+x1 + x2 &gt;= 2;
+int x1, x2;</textarea>
+
+                  <div class="btns">
+                        <button id="btnCheck" type="button">Verificar viabilidade</button>
+                  </div>
+
+                  <div id="result" class="result warn">Aguardando entrada...</div>
+            </section>
+      </main>
+
+      <script>
+            const elInput = document.getElementById('lpInput');
+            const elResult = document.getElementById('result');
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+
+            tabButtons.forEach(btn => {
+                  btn.addEventListener('click', () => {
+                        const target = btn.dataset.tab;
+                        tabButtons.forEach(b => {
+                              b.classList.remove('active');
+                              b.setAttribute('aria-selected', 'false');
+                        });
+                        tabPanels.forEach(panel => {
+                              panel.classList.remove('active');
+                              panel.hidden = true;
+                        });
+
+                        btn.classList.add('active');
+                        btn.setAttribute('aria-selected', 'true');
+                        const panel = document.getElementById(target);
+                        panel.hidden = false;
+                        panel.classList.add('active');
+                  });
+            });
+
+            const exViavel = `min: x1 + x2;
+x1 >= 1;
+x2 >= 1;
+x1 + x2 >= 2;
+int x1, x2;`;
+
+            const exInviavel = `min: x1;
+x1 >= 3;
+x1 <= 1;
+int x1;`;
+
+            document.getElementById('btnExViavel').addEventListener('click', () => {
+                  elInput.value = exViavel;
+                  render('Exemplo viável carregado.', 'warn');
+            });
+
+            document.getElementById('btnExInviavel').addEventListener('click', () => {
+                  elInput.value = exInviavel;
+                  render('Exemplo inviável carregado.', 'warn');
+            });
+
+            document.getElementById('btnLimpar').addEventListener('click', () => {
+                  elInput.value = '';
+                  render('Entrada limpa.', 'warn');
+            });
+
+            document.getElementById('btnCheck').addEventListener('click', () => {
+                  try {
+                        const report = checkFeasibility(elInput.value);
+                        render(report.message, report.status);
+                  } catch (err) {
+                        render('Erro ao processar entrada: ' + err.message, 'bad');
+                  }
+            });
+
+            function render(message, status) {
+                  elResult.className = 'result ' + (status || 'warn');
+                  elResult.textContent = message;
+            }
+
+            function stripComments(s) {
+                  return s
+                        .replace(/\/\*[\s\S]*?\*\//g, '')
+                        .replace(/\/\/.*$/gm, '');
+            }
+
+            function splitStatements(source) {
+                  return source
+                        .split(';')
+                        .map(x => x.trim())
+                        .filter(Boolean);
+            }
+
+            function isDeclaration(stmt) {
+                  return /^(int|bin|binary|free|sec|sos\d*)\b/i.test(stmt);
+            }
+
+            function parseDeclaredVars(stmt) {
+                  const m = stmt.match(/^(int|bin|binary|free|sec)\b\s*(.*)$/i);
+                  if (!m) return { kind: null, vars: [] };
+                  const kind = m[1].toLowerCase();
+                  const varsRaw = m[2] || '';
+                  const vars = varsRaw
+                        .split(',')
+                        .map(v => v.trim())
+                        .filter(Boolean)
+                        .filter(v => /^[A-Za-z][A-Za-z0-9_\[\]\{\}\/\.&#$%~'@\^]*$/.test(v));
+                  return { kind, vars };
+            }
+
+            function parseLinearExpr(expr) {
+                  const cleaned = expr.replace(/\s+/g, ' ').trim();
+                  if (!cleaned) return { coeffs: new Map(), c: 0 };
+
+                  const normalized = cleaned
+                        .replace(/-/g, '+-')
+                        .replace(/^\+/, '');
+
+                  const parts = normalized
+                        .split('+')
+                        .map(t => t.trim())
+                        .filter(Boolean);
+
+                  const coeffs = new Map();
+                  let c = 0;
+
+                  for (const t0 of parts) {
+                        const t = t0.replace(/\s+/g, ' ').trim();
+
+                        if (/^[+-]?\d*\.?\d+(e[+-]?\d+)?$/i.test(t)) {
+                              c += parseFloat(t);
+                              continue;
+                        }
+
+                        let m = t.match(/^([+-]?)\s*([A-Za-z][A-Za-z0-9_\[\]\{\}\/\.&#$%~'@\^]*)$/);
+                        if (m) {
+                              const sign = m[1] === '-' ? -1 : 1;
+                              const v = m[2];
+                              coeffs.set(v, (coeffs.get(v) || 0) + sign);
+                              continue;
+                        }
+
+                        m = t.match(/^([+-]?\d*\.?\d+(e[+-]?\d+)?)\s+([A-Za-z][A-Za-z0-9_\[\]\{\}\/\.&#$%~'@\^]*)$/i);
+                        if (m) {
+                              const a = parseFloat(m[1]);
+                              const v = m[3];
+                              coeffs.set(v, (coeffs.get(v) || 0) + a);
+                              continue;
+                        }
+
+                        m = t.match(/^([+-]?\d*\.?\d+(e[+-]?\d+)?)\s*([A-Za-z][A-Za-z0-9_\[\]\{\}\/\.&#$%~'@\^]*)$/i);
+                        if (m) {
+                              const a = parseFloat(m[1]);
+                              const v = m[3];
+                              coeffs.set(v, (coeffs.get(v) || 0) + a);
+                              continue;
+                        }
+
+                        throw new Error('Termo não reconhecido: "' + t + '"');
+                  }
+
+                  return { coeffs, c };
+            }
+
+            function parseConstraint(stmt) {
+                  let s = stmt.trim();
+
+                  const labelMatch = s.match(/^([A-Za-z][\w\.]*)\s*:\s*(.*)$/);
+                  if (labelMatch) s = labelMatch[2].trim();
+
+                  if (!/(<=|>=|=|<|>)/.test(s)) return null;
+
+                  const range = s.match(/^(.*?)\s*(<=|>=|<|>)\s*(.*?)\s*(<=|>=|<|>)\s*(.*?)$/);
+                  if (range) {
+                        const [_, a, op1, b, op2, c] = range;
+                        return [
+                              parseTwoSide(`${a} ${op1} ${b}`),
+                              parseTwoSide(`${b} ${op2} ${c}`)
+                        ];
+                  }
+
+                  return [parseTwoSide(s)];
+            }
+
+            function parseTwoSide(s) {
+                  const m = s.match(/^(.*?)\s*(<=|>=|=|<|>)\s*(.*?)$/);
+                  if (!m) throw new Error('Restrição inválida: ' + s);
+                  const lhs = parseLinearExpr(m[1]);
+                  const op = normalizeOp(m[2]);
+                  const rhs = parseLinearExpr(m[3]);
+                  return { lhs, op, rhs, raw: s };
+            }
+
+            function normalizeOp(op) {
+                  if (op === '<') return '<=';
+                  if (op === '>') return '>=';
+                  return op;
+            }
+
+            function evalExpr(expr, assign) {
+                  let v = expr.c;
+                  for (const [name, coef] of expr.coeffs.entries()) {
+                        v += coef * (assign[name] ?? 0);
+                  }
+                  return v;
+            }
+
+            function satisfies(constraint, assign, eps = 1e-9) {
+                  const L = evalExpr(constraint.lhs, assign);
+                  const R = evalExpr(constraint.rhs, assign);
+                  if (constraint.op === '<=') return L <= R + eps;
+                  if (constraint.op === '>=') return L + eps >= R;
+                  return Math.abs(L - R) <= eps;
+            }
+
+            function extractVars(objective, constraints, declarations) {
+                  const vars = new Set();
+
+                  if (objective) {
+                        for (const v of objective.coeffs.keys()) vars.add(v);
+                  }
+
+                  for (const c of constraints) {
+                        for (const v of c.lhs.coeffs.keys()) vars.add(v);
+                        for (const v of c.rhs.coeffs.keys()) vars.add(v);
+                  }
+
+                  for (const d of declarations) {
+                        for (const v of d.vars) vars.add(v);
+                  }
+
+                  return [...vars];
+            }
+
+            function inferBounds(vars, constraints, kinds) {
+                  const bounds = {};
+                  for (const v of vars) {
+                        if (kinds.bin.has(v)) bounds[v] = { lo: 0, hi: 1 };
+                        else bounds[v] = { lo: 0, hi: 20 };
+                  }
+
+                  for (const c of constraints) {
+                        const std = toStandard(c);
+                        const entries = [...std.a.entries()].filter(([_, val]) => Math.abs(val) > 1e-12);
+                        if (entries.length !== 1) continue;
+
+                        let [v, coef] = entries[0];
+                        let op = std.op;
+                        let b = std.b;
+
+                        if (coef < 0) {
+                              coef = -coef;
+                              b = -b;
+                              op = flipOp(op);
+                        }
+
+                        const x = b / coef;
+                        if (!Number.isFinite(x)) continue;
+
+                        const isInt = kinds.bin.has(v) || kinds.int.has(v);
+                        const loCandidate = isInt ? Math.ceil(x) : x;
+                        const hiCandidate = isInt ? Math.floor(x) : x;
+
+                        if (op === '>=') bounds[v].lo = Math.max(bounds[v].lo, loCandidate);
+                        if (op === '<=') bounds[v].hi = Math.min(bounds[v].hi, hiCandidate);
+                        if (op === '=') {
+                              bounds[v].lo = Math.max(bounds[v].lo, loCandidate);
+                              bounds[v].hi = Math.min(bounds[v].hi, hiCandidate);
+                        }
+                  }
+
+                  return bounds;
+            }
+
+            function toStandard(c) {
+                  const a = new Map();
+
+                  for (const [v, coef] of c.lhs.coeffs.entries()) {
+                        a.set(v, (a.get(v) || 0) + coef);
+                  }
+                  for (const [v, coef] of c.rhs.coeffs.entries()) {
+                        a.set(v, (a.get(v) || 0) - coef);
+                  }
+
+                  const b = c.rhs.c - c.lhs.c;
+                  return { a, b, op: c.op };
+            }
+
+            function flipOp(op) {
+                  if (op === '>=') return '<=';
+                  if (op === '<=') return '>=';
+                  return op;
+            }
+
+            function checkFeasibility(input) {
+                  const clean = stripComments(input);
+                  const stmts = splitStatements(clean);
+                  if (stmts.length === 0) {
+                        return { status: 'warn', message: 'Entrada vazia.' };
+                  }
+
+                  const declarations = [];
+                  const constraints = [];
+                  let objective = null;
+
+                  for (const stmt of stmts) {
+                        const objMatch = stmt.match(/^(min|max|minimize|maximize|minimise|maximise)\s*:\s*(.*)$/i);
+                        if (objMatch) {
+                              objective = parseLinearExpr(objMatch[2] || '0');
+                              continue;
+                        }
+
+                        if (isDeclaration(stmt)) {
+                              declarations.push(parseDeclaredVars(stmt));
+                              continue;
+                        }
+
+                        const parsed = parseConstraint(stmt);
+                        if (parsed) constraints.push(...parsed);
+                  }
+
+                  if (!objective) {
+                        return {
+                              status: 'warn',
+                              message: 'Não encontrei função objetivo. Exemplo esperado: min: x1 + x2;'
+                        };
+                  }
+
+                  if (constraints.length === 0) {
+                        return {
+                              status: 'warn',
+                              message: 'Sem restrições, o modelo é trivialmente viável (para este simulador).'
+                        };
+                  }
+
+                  const kinds = {
+                        int: new Set(),
+                        bin: new Set(),
+                        free: new Set(),
+                  };
+
+                  for (const d of declarations) {
+                        if (d.kind === 'int') d.vars.forEach(v => kinds.int.add(v));
+                        if (d.kind === 'bin' || d.kind === 'binary') d.vars.forEach(v => kinds.bin.add(v));
+                        if (d.kind === 'free') d.vars.forEach(v => kinds.free.add(v));
+                  }
+
+                  const vars = extractVars(objective, constraints, declarations);
+                  if (vars.length === 0) {
+                        return { status: 'warn', message: 'Nenhuma variável detectada.' };
+                  }
+
+                  if (vars.length > 6) {
+                        return {
+                              status: 'warn',
+                              message: `Modelo com ${vars.length} variáveis. Este simulador suporta até 6 para busca exaustiva.`
+                        };
+                  }
+
+                  const bounds = inferBounds(vars, constraints, kinds);
+                  for (const v of vars) {
+                        if (bounds[v].lo > bounds[v].hi) {
+                              return {
+                                    status: 'bad',
+                                    message: `INVIÁVEL: limite inconsistente para ${v} (${bounds[v].lo} > ${bounds[v].hi}).`
+                              };
+                        }
+                  }
+
+                  const domains = vars.map(v => {
+                        const isInt = kinds.int.has(v) || kinds.bin.has(v);
+                        const lo = bounds[v].lo;
+                        const hi = bounds[v].hi;
+
+                        if (!isInt) {
+                              const loI = Math.ceil(lo);
+                              const hiI = Math.floor(hi);
+                              return { v, values: range(loI, hiI) };
+                        }
+
+                        return { v, values: range(Math.ceil(lo), Math.floor(hi)) };
+                  });
+
+                  domains.sort((a, b) => a.values.length - b.values.length);
+                  if (domains.some(d => d.values.length === 0)) {
+                        return {
+                              status: 'bad',
+                              message: 'INVIÁVEL: domínio vazio para pelo menos uma variável.'
+                        };
+                  }
+
+                  const assign = {};
+                  let found = null;
+
+                  function bt(i) {
+                        if (found) return;
+                        if (i === domains.length) {
+                              const ok = constraints.every(c => satisfies(c, assign));
+                              if (ok) found = { ...assign };
+                              return;
+                        }
+                        const d = domains[i];
+                        for (const val of d.values) {
+                              assign[d.v] = val;
+                              bt(i + 1);
+                              if (found) return;
+                        }
+                  }
+
+                  bt(0);
+
+                  if (found) {
+                        const pretty = vars.map(v => `${v}=${found[v] ?? 0}`).join(', ');
+                        return {
+                              status: 'ok',
+                              message: `VIÁVEL ✅\nFoi encontrada uma solução: ${pretty}`
+                        };
+                  }
+
+                  return {
+                        status: 'bad',
+                        message: 'INVIÁVEL ❌\nNenhuma atribuição no domínio testado satisfaz todas as restrições.'
+                  };
+            }
+
+            function range(a, b) {
+                  const out = [];
+                  if (!Number.isFinite(a) || !Number.isFinite(b)) return out;
+                  if (a > b) return out;
+                  for (let x = a; x <= b; x++) out.push(x);
+                  return out;
+            }
+      </script>
+</body>
+</html>
