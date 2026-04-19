@@ -1,6 +1,64 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void printFuncaoObjetivo(FILE *archive, int *dados_compri, int p, int c);
+
+void printComponenteDiario(FILE *archive, int c, int p, int *compo_nece, int *dados_compri);
+
+void printComponenteLimite(FILE *archive, int c, int p, int k, int *dados_compri, int *limite);
+
+void printComponenteNaoNegativo(FILE *archive, int p);
+
+void printDeclaracoes(FILE *archive, int p);
+
+void montaPL(int c, int p, int k, int *compo_nece, int *dados_compri, int *limite);
+
+int main()
+{
+    int c, p;
+    printf("Quais sao as qnt de componentes e a qnt de tipos de comprimidos ? \n");
+    if (scanf("%d %d", &c, &p) != 2)
+        return 1;
+    int *compo_nece = malloc(sizeof(int) * c);
+    printf("Quais sao as quantidades diarias necessarias de cada componente ? \n");
+    for (int i = 0; i < c; i++)
+    {
+        if (scanf("%d", &compo_nece[i]) != 1)
+            return 2;
+    }
+    int total_elementos = p * (c + 1);
+    int *dados_compri = malloc(sizeof(int) * total_elementos);
+    printf("Quais sao as p linhas, cada uma com os dados de um tipo de comprimido ? \n");
+    for (int i = 0; i < total_elementos; i++)
+    {
+        if (scanf("%d", &dados_compri[i]) != 1)
+            return 3;
+    }
+
+    printf("Quais sao os k pares de limitacoes ? \n");
+    int k;
+    if (scanf("%d", &k) != 1)
+        return 4;
+
+    int tamLimite = k * 2;
+    int *limite = malloc(sizeof(int) * tamLimite);
+
+    printf("Quais os k pares de  ? \n");
+    for (int i = 0; i < tamLimite; i += 2)
+    {
+        if (scanf("%d %d", &limite[i], &limite[i + 1]) != 2)
+            return 5;
+    }
+
+    montaPL(c, p, k, compo_nece, dados_compri, limite);
+
+    free(compo_nece);
+    free(dados_compri);
+    free(limite);
+
+    return 0;
+}
+
 void printFuncaoObjetivo(FILE *archive, int *dados_compri, int p, int c)
 {
     fprintf(archive, "min: ");
@@ -25,41 +83,52 @@ void printComponenteDiario(FILE *archive, int c, int p, int *compo_nece, int *da
         int j = 1;
         for (; j < p; j++)
         {
-            fprintf(archive, "%dx%d +", dados_compri[j * c + i], j);
+            fprintf(archive, "%dx%d +", dados_compri[(j - 1) * (c + 1) + i - 1], j);
         }
         for (; j == p; j++)
         {
-            fprintf(archive, "%dx%d >= %d;\n", dados_compri[j * c + i], j, compo_nece[i]);
+            fprintf(archive, "%dx%d >= %d;\n", dados_compri[(j - 1) * (c + 1) + i - 1], j, compo_nece[i - 1]);
         }
     }
 }
 
 void printComponenteLimite(FILE *archive, int c, int p, int k, int *dados_compri, int *limite)
 {
-    for (int i = 1; i <= k; i++)
+    int tam = k * 2;
+    for (int i = 1; i <= tam; i += 2)
     {
         int j = 1;
         for (; j < p; j++)
         {
-            fprintf(archive, "%dx%d +", dados_compri[j * c + i], j);
+            //(j - 1) * c + i - 1
+            fprintf(archive, "%dx%d +", dados_compri[(j - 1) * (c + 1) + limite[i - 1] - 1], j);
         }
-        for (; j == k; j++)
+        for (; j == p; j++)
         {
-            fprintf(archive, "%dx%d <= %d;\n", dados_compri[j * c + i], j, limite[k]);
+            fprintf(archive, "%dx%d <= %d;\n", dados_compri[(j - 1) * (c + 1) + limite[i - 1] - 1], j, limite[i]);
         }
+    }
+}
+
+void printComponenteNaoNegativo(FILE *archive, int p)
+{
+    for (int i = 1; i <= p; i++)
+    {
+        fprintf(archive, "x%d >= 0;\n", i);
     }
 }
 
 void printDeclaracoes(FILE *archive, int p)
 {
     int i = 1;
+    fprintf(archive, "int ");
     for (; i < p; i++)
     {
-        fprintf(archive, "int x%d; ", i);
+        fprintf(archive, "x%d, ", i);
     }
     for (; i == p; i++)
     {
-        fprintf(archive, "int x%d;", i);
+        fprintf(archive, "x%d;\n", i);
     }
 }
 
@@ -76,81 +145,11 @@ void montaPL(int c, int p, int k, int *compo_nece, int *dados_compri, int *limit
         return;
     }
 
-    int *funcObjetivo = malloc(sizeof(int) * p);
     printFuncaoObjetivo(arquivo, dados_compri, p, c);
     printComponenteDiario(arquivo, c, p, compo_nece, dados_compri);
     printComponenteLimite(arquivo, c, p, k, dados_compri, limite);
+    printComponenteNaoNegativo(arquivo, p);
     printDeclaracoes(arquivo, p);
 
-    fprintf(arquivo, "a");
-
-    free(funcObjetivo);
     fclose(arquivo);
 };
-
-int main()
-{
-    int c, p;
-    printf("Quais sao as qnt de componentes e a qnt de tipos de comprimidos ? \n");
-    if (scanf("%d %d", &c, &p) != 2)
-        return 1;
-    int *compo_nece = malloc(sizeof(int) * c);
-    printf("Quais sao as quantidades diarias necessarias de cada componente ?\n");
-    // o usuario deve mandar uma linha com c numeros inteiros
-    // isso indica as quantidades diarias necessarias de cada componente q1,q2,..., qc
-    for (int i = 0; i < c; i++)
-    {
-        if (scanf("%d", &compo_nece[i]) != 1)
-            break;
-    }
-    int total_elementos = p * (c + 1);
-    int *dados_compri = malloc(sizeof(int) * total_elementos);
-    printf("Quais sao as p linhas, cada uma com os dados de um tipo de comprimido ?");
-    // Linha: produto
-    // Coluna: Componentes do produto
-    for (int i = 0; i < total_elementos; i++)
-    {
-        if (scanf("%d", &dados_compri[i]) != 1)
-            break;
-    }
-
-    // restricoes
-    int k;
-    if (scanf("%d", &k) != 1)
-        return 4;
-
-    int *limite = malloc(sizeof(int) * (k * 2));
-    for (int i = 0; i < k; i += 2)
-    {
-        // leitura do par <componente, limite>
-        if (scanf("%d %d", &limite[i], &limite[i + 1]) != 2)
-            break;
-    }
-
-    // Cada comprimido i eh descrito com c + 1 numeros inteiros
-    // Sendo r[i,1],r[1,2],...,r[i,c] as quantidades de cada componente presente no comprimido
-    // v[i] eh o preco, com i = 1,2,...,p
-
-    montaPL(c, p, k, compo_nece, dados_compri, limite);
-
-    free(compo_nece);
-    free(dados_compri);
-
-    return 0;
-}
-
-// z = for (int i = 1 , i<= p, i++) { z = vi * xi}
-// min z;
-// restricoes
-
-// int limite = 0;
-//  for(int i = 1; i <= p; i++){limite = limite + r[i,ft]*xi}
-//  limite <= lt
-// para todo t pertencente a [1,k]
-// para cada componente limitado, a soma total nao pode ultrapassar o limite
-
-// int componentes =0
-//  for(int i =1; i<= p; i++){componentes +=r[i,j]*xi}
-// componentes >= qj para
-// odo j pertencente a [1,c]
-/// t//para cada componente j, a soma da quantidade presente nos comprimidos escolhidos deve ser pelo menos qj
