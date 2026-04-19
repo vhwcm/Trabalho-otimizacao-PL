@@ -1,6 +1,7 @@
 # Trabalho de Otimização (LP Solve)
 
 Projeto em C para montar automaticamente um modelo de Programação Linear no formato `.lp`, compatível com `lp_solve`.
+<img width="1366" height="558" alt="image" src="https://github.com/user-attachments/assets/30b54dbc-338f-4717-b473-6ef93b7026f4" />
 
 ## Objetivo
 
