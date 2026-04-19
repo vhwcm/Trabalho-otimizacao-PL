@@ -27,7 +27,7 @@ void printComponenteDiario(FILE *archive, int c, int p, int *compo_nece, int *da
         {
             fprintf(archive, "%dx%d +", dados_compri[j * c + i], j);
         }
-        for (; j = p; j++)
+        for (; j == p; j++)
         {
             fprintf(archive, "%dx%d >= %d;\n", dados_compri[j * c + i], j, compo_nece[i]);
         }
@@ -41,11 +41,11 @@ void printComponenteLimite(FILE *archive, int c, int p, int k, int *dados_compri
         int j = 1;
         for (; j < p; j++)
         {
-            fprintf(archive, "%dx%d +", dados_compri[j * c + i], j, i);
+            fprintf(archive, "%dx%d +", dados_compri[j * c + i], j);
         }
-        for (; j = k; j++)
+        for (; j == k; j++)
         {
-            fprintf(archive, "%dx%d <= %d;\n", dados_compri[j * c + i], j, i, limite[k]);
+            fprintf(archive, "%dx%d <= %d;\n", dados_compri[j * c + i], j, limite[k]);
         }
     }
 }
@@ -57,7 +57,7 @@ void printDeclaracoes(FILE *archive, int p)
     {
         fprintf(archive, "int x%d; ", i);
     }
-    for (; i = p; i++)
+    for (; i == p; i++)
     {
         fprintf(archive, "int x%d;", i);
     }
