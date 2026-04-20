@@ -1,0 +1,102 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- Pacotes Básicos ---
+\usepackage[utf8]{inputenc}
+\usepackage[portuguese]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{indentfirst}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% --- Configuração de Margens ---
+\geometry{left=3cm, top=3cm, right=2cm, bottom=2cm}
+
+% --- Configuração para Código C ---
+\definecolor{mGreen}{rgb}{0,0.6,0}
+\definecolor{mGray}{rgb}{0.5,0.5,0.5}
+\definecolor{mPurple}{rgb}{0.58,0,0.82}
+\lstset{
+    language=C,
+    basicstyle=\ttfamily\small,
+    commentstyle=\color{mGreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{mGray},
+    stringstyle=\color{mPurple},
+    breaklines=true,
+    showstringspaces=false,
+    numbers=left,
+    frame=single
+}
+
+% --- Título e Autores ---
+\title{\textbf{Relatório Primeiro Trabalho Prático da disciplina de Otimização(CI-1238)}}
+\author{
+    Eduardo Munaretto \\
+    Viktor Hugo \\
+    João Pedro de Oliveira Lazari \\
+    \small{UFPR}
+}
+\date{Abril de 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+ O objetivo do projeto foi determinar a combinação ideal de comprimidos que satisfaça as  necessidades do paciente e ao mesmo tempo respeite os limites de consumo para não prejudicar a saúde, tudo isso com o menor custo possível. A solução envolve modelagem por Programação Linear e uma implementação em C para geração de entradas adequadas para o algoritmo Simplex \texttt{}.
+\end{abstract}
+
+\section{Introdução}
+Na indústria farmacêutica, é comum que princípios ativos sejam administrados via coquetéis que contêm não apenas os componentes necessários, mas também excipientes como lactose, glúten ou álcool. Para pacientes com restrições alimentares , o consumo desses comprimidos deve ser feito com cuidado.
+
+O problema proposto exige que sejam atendidas quantidades mínimas diárias de $c$ componentes a partir de $p$ tipos de comprimidos disponíveis, cada um com um custo específico. Adicionalmente, deve-se respeitar um teto máximo para $k$ componentes limitados.
+
+\section{Modelagem Matemática}
+
+Modelamos o problema por um PL (Programação Linear)
+
+\subsection{Variáveis de Decisão}
+Seja $x_i$ a quantidade de comprimidos do tipo $i$ a serem consumidos por dia, para $i = 1, \dots, p$. 
+
+\subsection{Função Objetivo}
+Minimizar o custo total da dieta medicamentosa:
+\[ \min Z = \sum_{i=1}^{p} v_i x_i \]
+$v_i$ é o preço do comprimido $i$.
+
+\subsection{Restrições}
+\begin{enumerate}
+    \item \textbf{Necessidades Mínimas:} Para cada componente $j \in \{1, \dots, c\}$:
+    \[ \sum_{i=1}^{p} r_{i,j} x_i \ge q_j \]
+    Onde $r_{i,j}$ é a quantidade do componente $j$ no comprimido $i$, e $q_j$ é a exigência diária.
+    
+    \item \textbf{Limites Máximos:} Para cada componente limitado $f_t$ com limite $l_t$:
+    \[ \sum_{i=1}^{p} r_{i,f_t} x_i \le l_t \]
+    
+    \item \textbf{Não-negatividade e Integralidade:}
+    \[ x_i \ge 0 \quad \text{e} \quad x_i \in \mathbb{Z} \]
+\end{enumerate}
+
+\subsection{Justificativa da Modelagem}
+ Ao definir as variáveis como inteiras, garantimos que a solução seja aplicável no mundo real (não se pode tomar frações arbitrárias de comprimidos em muitos casos).
+
+\section{Implementação}
+A implementação foi realizada em linguagem C.
+
+\subsection{Estrutura do Código}
+O programa foi dividido em módulos funcionais:
+\begin{itemize}
+    \item \texttt{printFuncaoObjetivo}: Varre os dados de entrada para montar a linha de custo.
+    \item \texttt{printComponenteDiario}: Gera as restrições do tipo $\ge$ para os princípios ativos.
+    \item \texttt{printComponenteLimite}: Gera as restrições do tipo $\le$ para os componentes com restrição de consumo.
+    \item \texttt{printDeclaracoes}: Define as variáveis como inteiras para o solver.
+\end{itemize}
+
+
+\section{Conclusão}
+
+
+\end{document}
