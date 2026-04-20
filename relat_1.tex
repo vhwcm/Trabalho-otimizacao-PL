@@ -47,17 +47,30 @@
 \maketitle
 
 \begin{abstract}
- O objetivo do projeto foi determinar a combinação ideal de comprimidos que satisfaça as  necessidades do paciente e ao mesmo tempo respeite os limites de consumo para não prejudicar a saúde, tudo isso com o menor custo possível. A solução envolve modelagem por Programação Linear e uma implementação em C para geração de entradas adequadas para o algoritmo Simplex \texttt{}.
+ O objetivo do projeto foi determinar a combinação ideal de comprimidos que satisfaça as  necessidades do paciente e ao mesmo tempo respeite os limites de consumo para não prejudicar a sua saúde, tudo isso com o menor custo possível. A solução envolve modelagem por Programação Linear e uma implementação em C para geração de entradas adequadas para o algoritmo Simplex \texttt{}.
 \end{abstract}
 
 \section{Introdução}
-Na indústria farmacêutica, é comum que princípios ativos sejam administrados via coquetéis que contêm não apenas os componentes necessários, mas também componentes como lactose, glúten ou álcool. Para pacientes com restrições alimentares , o consumo desses comprimidos deve ser feito com cuidado.
+Na indústria farmacêutica, é comum que remédios sejam tomados via coquetéis que contêm não apenas os componentes necessários, mas também componentes como lactose, glúten ou álcool. Para pacientes com restrições alimentares , o consumo desses comprimidos deve ser feito com cuidado.
 
 O problema proposto exige que sejam atendidas quantidades mínimas diárias de $c$ componentes a partir de $p$ tipos de comprimidos disponíveis, cada um com um custo específico. Adicionalmente, deve-se respeitar um teto máximo para $k$ componentes limitados.
 
 \section{Modelagem Matemática}
 
 Modelamos o problema por um PL (Programação Linear)
+
+\section{Nota sobre Inviabilidade do Modelo}
+
+A inviabilidade em um problema de Programação Linear ocorre quando não existe nenhuma combinação de variáveis $x_i$ que satisfaça todas as restrições simultaneamente. No contexto deste problema a instância pode ser inviável em:
+
+\subsection{Situações em que o PL é inviável}
+Quando a quantidade mínima necessária de um componente ($q_j$) exige uma dosagem de comprimidos tal que a soma de um componente restrito ($f_k$) ultrapassa o seu limite máximo ($l_k$). 
+
+Se o vetor de necessidades indica que um componente $q_j > 0$ é obrigatório, mas esse componente não está em nenhum dos $p$ comprimidos fornecidos na matriz de composição ($r_{i,j} = 0, \forall i$), o modelo não encontrará solução. Matematicamente, a restrição $\sum 0 \cdot x_i \ge q_j$ nunca é satisfeita.
+
+Caso um componente limitado esteja presente em proporções significativas em \textbf{todos} os tipos de comprimidos disponíveis, e a necessidade total de princípios ativos diversos seja muito elevada, o somatório acumulado desses excipientes pode estourar o limite $l_k$ antes que todas as necessidades mínimas $q_j$ sejam atingidas.
+
+No Simplex, a inviabilidade é detectada no início. Se ao final das iterações uma variável artificial permanecer na base com valor maior que zero, isso prova que as restrições definem regiões no espaço $\mathbb{R}^p$ que não se interceptam.
 
 \subsection{Variáveis de Decisão}
 Seja $x_i$ a quantidade de comprimidos do tipo $i$ a serem consumidos por dia, para $i = 1, \dots, p$. 
@@ -97,6 +110,7 @@ O programa foi dividido em módulos:
 
 
 \section{Conclusão}
+Embora, a escrita em arquivos em c e a adequação da entrada de dados para o correto funcionamento no solver tenham sido algumas das dificuldades.A modelagem da problemática por um PL foi certeira, haja visto a dificuldade da questão em outros modelos matemáticos.
 
 
 \end{document}
