@@ -37,7 +37,7 @@
 \author{
     Eduardo Munaretto \\
     Viktor Hugo \\
-    João Pedro de Oliveira Lazari \\
+    João Pedro de Oliveira Lazari (20242306) \\
     \small{UFPR}
 }
 \date{Abril de 2026}
@@ -51,7 +51,7 @@
 \end{abstract}
 
 \section{Introdução}
-Na indústria farmacêutica, é comum que princípios ativos sejam administrados via coquetéis que contêm não apenas os componentes necessários, mas também excipientes como lactose, glúten ou álcool. Para pacientes com restrições alimentares , o consumo desses comprimidos deve ser feito com cuidado.
+Na indústria farmacêutica, é comum que princípios ativos sejam administrados via coquetéis que contêm não apenas os componentes necessários, mas também componentes como lactose, glúten ou álcool. Para pacientes com restrições alimentares , o consumo desses comprimidos deve ser feito com cuidado.
 
 O problema proposto exige que sejam atendidas quantidades mínimas diárias de $c$ componentes a partir de $p$ tipos de comprimidos disponíveis, cada um com um custo específico. Adicionalmente, deve-se respeitar um teto máximo para $k$ componentes limitados.
 
@@ -81,13 +81,13 @@ $v_i$ é o preço do comprimido $i$.
 \end{enumerate}
 
 \subsection{Justificativa da Modelagem}
- Ao definir as variáveis como inteiras, garantimos que a solução seja aplicável no mundo real (não se pode tomar frações arbitrárias de comprimidos em muitos casos).
+ Ao definir as variáveis como inteiras, garantimos que a solução seja aplicável no mundo real (não se pode tomar frações de comprimidos).
 
 \section{Implementação}
 A implementação foi realizada em linguagem C.
 
 \subsection{Estrutura do Código}
-O programa foi dividido em módulos funcionais:
+O programa foi dividido em módulos:
 \begin{itemize}
     \item \texttt{printFuncaoObjetivo}: Varre os dados de entrada para montar a linha de custo.
     \item \texttt{printComponenteDiario}: Gera as restrições do tipo $\ge$ para os princípios ativos.
